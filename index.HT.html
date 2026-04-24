@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Mi Tienda">
+<title>Mi Tienda</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=DM+Sans:wght@300;400;500&display=swap');
+  :root {
+    --bg:#0d0d0f;--bg2:#16161a;--bg3:#1e1e24;--card:#1a1a20;
+    --border:rgba(255,255,255,0.07);--accent:#c8f25a;--accent2:#a8e03a;
+    --text:#f0f0f0;--muted:#888;--muted2:#555;
+    --danger:#ff5f57;--warn:#ffbd2e;--success:#28c840;
+    --radius:16px;--radius-sm:10px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;padding-bottom:90px;overscroll-behavior:none}
+
+  .header{background:var(--bg);padding:56px 20px 16px;position:sticky;top:0;z-index:100;border-bottom:1px solid var(--border);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
+  .header-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+  .app-title{font-family:'Syne',sans-serif;font-size:22px;font-weight:700;letter-spacing:-.5px}
+  .app-title span{color:var(--accent)}
+  .sync-dot{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted)}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--muted2)}
+  .dot.on{background:var(--success);box-shadow:0 0 6px var(--success);animation:pulse 2s infinite}
+  .dot.err{background:var(--danger)}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+  .tabs{display:flex;background:var(--bg3);border-radius:999px;padding:4px}
+  .tab{flex:1;padding:9px 0;text-align:center;font-size:13px;font-weight:500;color:var(--muted);border-radius:999px;cursor:pointer;transition:all .2s;font-family:'DM Sans',sans-serif;border:none;background:transparent}
+  .tab.active{background:var(--accent);color:#0d0d0f;font-weight:600}
+
+  .metrics{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:16px 16px 0}
+  .met{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px}
+  .met-lbl{font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin-bottom:6px;font-weight:500}
+  .met-val{font-family:'Syne',sans-serif;font-size:24px;font-weight:700;line-height:1}
+  .met-val.g{color:var(--accent)}.met-val.w{color:var(--warn)}.met-val.r{color:var(--danger)}.met-val.s{color:var(--success)}
+
+  .pane{display:none}.pane.on{display:block}
+
+  .form-toggle{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);margin:16px 16px 10px;cursor:pointer}
+  .form-toggle-title{font-family:'Syne',sans-serif;font-size:14px;font-weight:600}
+  .form-toggle-icon{font-size:20px;color:var(--accent);transition:transform .2s}
+  .form-toggle.open .form-toggle-icon{transform:rotate(45deg)}
+  .form-body{display:none;padding:0 16px}.form-body.open{display:block}
+
+  .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:10px}
+  .field{margin-bottom:12px}
+  .field label{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:6px;font-weight:500}
+  input,select{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-size:15px;padding:12px 14px;font-family:'DM Sans',sans-serif;-webkit-appearance:none;appearance:none;transition:border .15s}
+  input:focus,select:focus{outline:none;border-color:var(--accent)}
+  input[readonly]{color:var(--muted);background:var(--bg2)}
+  input::placeholder{color:var(--muted2)}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+  .btn{display:block;width:100%;padding:14px;border-radius:var(--radius-sm);border:none;font-size:15px;font-weight:600;font-family:'Syne',sans-serif;cursor:pointer;text-align:center;transition:all .15s;letter-spacing:.2px}
+  .btn:active{transform:scale(0.97)}
+  .btn-primary{background:var(--accent);color:#0d0d0f}
+  .btn-ghost{background:var(--bg3);color:var(--text);border:1px solid var(--border)}
+  .btn-danger{background:rgba(255,95,87,.12);color:var(--danger);border:1px solid rgba(255,95,87,.2);padding:8px 14px;font-size:13px;width:auto;border-radius:8px}
+
+  .prod-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:10px}
+  .prod-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px}
+  .prod-name{font-family:'Syne',sans-serif;font-size:15px;font-weight:600;margin-bottom:3px}
+  .prod-cat{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+  .badge{display:inline-block;font-size:10px;font-weight:600;padding:4px 10px;border-radius:999px;text-transform:uppercase;letter-spacing:.4px;white-space:nowrap}
+  .badge-ok{background:rgba(40,200,64,.12);color:var(--success)}
+  .badge-low{background:rgba(255,189,46,.12);color:var(--warn)}
+  .badge-out{background:rgba(255,95,87,.12);color:var(--danger)}
+  .prod-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:10px}
+  .stat-box{background:var(--bg3);border-radius:8px;padding:8px;text-align:center}
+  .stat-label{font-size:9px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:4px}
+  .stat-val{font-size:13px;font-weight:600}
+  .stat-val.accent{color:var(--accent)}
+  .prod-actions{display:flex;gap:8px;justify-content:flex-end}
+
+  .venta-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:10px}
+  .venta-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+  .venta-name{font-family:'Syne',sans-serif;font-size:14px;font-weight:600}
+  .venta-fecha{font-size:11px;color:var(--muted)}
+  .venta-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+  .venta-stat{background:var(--bg3);border-radius:8px;padding:8px;text-align:center}
+  .venta-stat-lbl{font-size:9px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:3px}
+  .venta-stat-val{font-size:13px;font-weight:600}
+  .venta-stat-val.g{color:var(--success)}
+
+  .bottom-bar{position:fixed;bottom:0;left:0;right:0;height:80px;background:var(--bg);border-top:1px solid var(--border);display:flex;align-items:center;justify-content:center;padding:0 20px 16px;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
+  .bottom-bar .tabs{width:100%;max-width:360px}
+
+  .toast{position:fixed;bottom:100px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--accent);color:#0d0d0f;font-size:13px;font-weight:600;padding:10px 20px;border-radius:999px;opacity:0;transition:all .3s;z-index:999;white-space:nowrap;pointer-events:none}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .toast.err{background:var(--danger);color:#fff}
+
+  .empty{text-align:center;color:var(--muted);padding:40px 20px;font-size:14px}
+  .empty-icon{font-size:36px;margin-bottom:10px}
+  .filter-row{display:flex;gap:8px;padding:0 16px 12px;align-items:center}
+  .filter-row input{flex:1}
+  .lista-wrap{padding:0 16px}
+
+  .loader{text-align:center;color:var(--muted);padding:30px;font-size:13px}
+  select option{background:#1a1a20;color:#f0f0f0}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-top">
+    <div class="app-title">Mi <span>Tienda</span></div>
+    <div class="sync-dot">
+      <div class="dot" id="sync-dot"></div>
+      <span id="sync-txt">Conectando...</span>
+    </div>
+  </div>
+  <div class="tabs">
+    <button class="tab active" onclick="goTab('almacen')">📦 Almacén</button>
+    <button class="tab" onclick="goTab('ventas')">💰 Ventas</button>
+  </div>
+</div>
+
+<!-- ALMACÉN -->
+<div id="pane-almacen" class="pane on">
+  <div class="metrics">
+    <div class="met"><div class="met-lbl">Productos</div><div class="met-val" id="ma-tot">—</div></div>
+    <div class="met"><div class="met-lbl">Disponibles</div><div class="met-val g" id="ma-disp">—</div></div>
+    <div class="met"><div class="met-lbl">Stock bajo</div><div class="met-val w" id="ma-low">—</div></div>
+    <div class="met"><div class="met-lbl">Valor inv.</div><div class="met-val g" id="ma-val">—</div></div>
+  </div>
+
+  <div class="form-toggle" id="ft-alm" onclick="toggleForm('alm')">
+    <span class="form-toggle-title">+ Agregar producto</span>
+    <span class="form-toggle-icon">+</span>
+  </div>
+  <div class="form-body" id="fb-alm">
+    <div class="card">
+      <div class="field"><label>Nombre del producto</label><input id="an" placeholder="Ej: Aro de luz 18''"></div>
+      <div class="field"><label>Categoría</label>
+        <select id="acat">
+          <option>Aros de luz</option><option>Micrófonos</option>
+          <option>Audífonos</option><option>Accesorios</option>
+        </select>
+      </div>
+      <div class="grid2">
+        <div class="field"><label>Stock total</label><input id="asto" type="number" min="0" placeholder="0"></div>
+        <div class="field"><label>Disponible</label><input id="adis" type="number" min="0" placeholder="0"></div>
+      </div>
+      <div class="grid2">
+        <div class="field"><label>Costo (S/)</label><input id="aco" type="number" min="0" step="0.01" placeholder="0.00"></div>
+        <div class="field"><label>Precio venta (S/)</label><input id="apr" type="number" min="0" step="0.01" placeholder="0.00"></div>
+      </div>
+      <div class="field"><label>Fecha de ingreso</label><input id="afe" type="date"></div>
+      <button class="btn btn-primary" onclick="addProd()">Agregar producto</button>
+    </div>
+  </div>
+
+  <div class="filter-row">
+    <input type="text" id="buscar" placeholder="Buscar producto..." oninput="renderAlm()">
+  </div>
+  <div class="lista-wrap" id="lista-alm"><div class="loader">Cargando inventario...</div></div>
+</div>
+
+<!-- VENTAS -->
+<div id="pane-ventas" class="pane">
+  <div class="metrics">
+    <div class="met"><div class="met-lbl">Ventas</div><div class="met-val" id="mv-n">—</div></div>
+    <div class="met"><div class="met-lbl">Ingresos</div><div class="met-val g" id="mv-ing">—</div></div>
+    <div class="met"><div class="met-lbl">Inversión</div><div class="met-val w" id="mv-inv">—</div></div>
+    <div class="met"><div class="met-lbl">Ganancia</div><div class="met-val s" id="mv-gan">—</div></div>
+  </div>
+
+  <div class="form-toggle" id="ft-ven" onclick="toggleForm('ven')">
+    <span class="form-toggle-title">+ Registrar venta</span>
+    <span class="form-toggle-icon">+</span>
+  </div>
+  <div class="form-body" id="fb-ven">
+    <div class="card">
+      <div class="field"><label>Producto</label>
+        <select id="vp" onchange="fillVenta()">
+          <option value="">— Selecciona —</option>
+        </select>
+      </div>
+      <div class="grid2">
+        <div class="field"><label>Cantidad</label><input id="vq" type="number" min="1" value="1" oninput="calcV()"></div>
+        <div class="field"><label>Precio de venta (S/)</label><input id="vpr" type="number" step="0.01" placeholder="0.00" oninput="calcV()"></div>
+      </div>
+      <div class="grid2">
+        <div class="field"><label>Inversión (auto)</label><input id="vi" readonly placeholder="—"></div>
+        <div class="field"><label>Ganancia (auto)</label><input id="vg" readonly placeholder="—"></div>
+      </div>
+      <div class="field"><label>Fecha</label><input id="vfe" type="date"></div>
+      <button class="btn btn-primary" onclick="addVenta()">Registrar venta</button>
+    </div>
+  </div>
+
+  <div class="filter-row">
+    <input type="date" id="filt-f" oninput="renderVentas()">
+    <button class="btn btn-ghost" style="width:auto;padding:12px 16px;font-size:13px" onclick="document.getElementById('filt-f').value='';renderVentas()">Todo</button>
+  </div>
+  <div class="lista-wrap" id="lista-ven"><div class="loader">Cargando ventas...</div></div>
+</div>
+
+<div class="bottom-bar">
+  <div class="tabs">
+    <button class="tab active" onclick="goTab('almacen')">📦 Almacén</button>
+    <button class="tab" onclick="goTab('ventas')">💰 Ventas</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- Firebase -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import {
+  getFirestore, collection, addDoc, deleteDoc, doc,
+  onSnapshot, updateDoc, query, orderBy, serverTimestamp
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyC2n50mi_PlTCecE0xw-ssj-sTgE30w_GU",
+  authDomain: "inventariotienda-58ae7.firebaseapp.com",
+  projectId: "inventariotienda-58ae7",
+  storageBucket: "inventariotienda-58ae7.firebasestorage.app",
+  messagingSenderId: "799105928098",
+  appId: "1:799105928098:web:7861d794bd15a9462b80fb"
+};
+
+const app = initializeApp(firebaseConfig);
+const db  = getFirestore(app);
+
+// ── Estado local ────────────────────────────────
+var prods  = [];
+var ventas = [];
+
+// ── Sync indicator ──────────────────────────────
+function setSyncOk()  { document.getElementById('sync-dot').className='dot on';  document.getElementById('sync-txt').textContent='Sincronizado'; }
+function setSyncErr() { document.getElementById('sync-dot').className='dot err'; document.getElementById('sync-txt').textContent='Sin conexión'; }
+
+// ── Toast ───────────────────────────────────────
+function showToast(msg, err) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (err ? ' err' : '');
+  clearTimeout(t._t);
+  t._t = setTimeout(function(){ t.className='toast'; }, 2800);
+}
+window.showToast = showToast;
+
+// ── Tabs ────────────────────────────────────────
+window.goTab = function(tab) {
+  ['almacen','ventas'].forEach(function(x){
+    document.getElementById('pane-'+x).classList.toggle('on', x===tab);
+  });
+  document.querySelectorAll('.tab').forEach(function(b,i){
+    b.classList.toggle('active', ['almacen','ventas'][i]===tab);
+  });
+  if (tab==='ventas') loadSelect();
+};
+
+window.toggleForm = function(key) {
+  document.getElementById('ft-'+key).classList.toggle('open');
+  document.getElementById('fb-'+key).classList.toggle('open');
+};
+
+// ── Helpers ─────────────────────────────────────
+function hoy(){ return new Date().toISOString().split('T')[0]; }
+
+function badge(d){
+  if(d<=0) return '<span class="badge badge-out">Sin stock</span>';
+  if(d<=2) return '<span class="badge badge-low">Stock bajo</span>';
+  return '<span class="badge badge-ok">Disponible</span>';
+}
+
+// ── ALMACÉN ─────────────────────────────────────
+function renderAlm() {
+  var q = (document.getElementById('buscar').value||'').toLowerCase();
+  var lista = prods.filter(function(p){
+    return p.nombre.toLowerCase().includes(q) || p.cat.toLowerCase().includes(q);
+  });
+  var c = document.getElementById('lista-alm');
+  if (!lista.length) {
+    c.innerHTML = '<div class="empty"><div class="empty-icon">📦</div>Sin productos aún</div>';
+    updateMetAlm(); return;
+  }
+  c.innerHTML = lista.map(function(p){
+    var mg = p.precio>0 ? Math.round((p.precio-p.costo)/p.precio*100) : 0;
+    return '<div class="prod-card">'+
+      '<div class="prod-header">'+
+        '<div><div class="prod-name">'+p.nombre+'</div><div class="prod-cat">'+p.cat+'</div></div>'+
+        badge(p.disp)+
+      '</div>'+
+      '<div class="prod-stats">'+
+        '<div class="stat-box"><div class="stat-label">Stock</div><div class="stat-val">'+p.stock+'</div></div>'+
+        '<div class="stat-box"><div class="stat-label">Disp.</div><div class="stat-val">'+p.disp+'</div></div>'+
+        '<div class="stat-box"><div class="stat-label">Precio</div><div class="stat-val accent">S/'+p.precio.toFixed(0)+'</div></div>'+
+        '<div class="stat-box"><div class="stat-label">Margen</div><div class="stat-val accent">'+mg+'%</div></div>'+
+      '</div>'+
+      '<div style="display:flex;justify-content:space-between;align-items:center">'+
+        '<span style="font-size:11px;color:var(--muted)">Costo S/'+p.costo.toFixed(2)+' · '+p.fecha+'</span>'+
+        '<button class="btn btn-danger" onclick="delProd(\''+p.id+'\')">Eliminar</button>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+  updateMetAlm();
+}
+
+function updateMetAlm(){
+  document.getElementById('ma-tot').textContent  = prods.length;
+  document.getElementById('ma-disp').textContent = prods.filter(function(x){return x.disp>0;}).length;
+  document.getElementById('ma-low').textContent  = prods.filter(function(x){return x.disp>0&&x.disp<=2;}).length;
+  var val = prods.reduce(function(s,x){return s+x.costo*x.stock;},0);
+  document.getElementById('ma-val').textContent  = 'S/'+val.toFixed(0);
+}
+
+window.addProd = async function() {
+  var n   = document.getElementById('an').value.trim();
+  var cat = document.getElementById('acat').value;
+  var sto = parseInt(document.getElementById('asto').value)||0;
+  var dis = parseInt(document.getElementById('adis').value);
+  if (isNaN(dis)) dis = sto;
+  var co  = parseFloat(document.getElementById('aco').value)||0;
+  var pr  = parseFloat(document.getElementById('apr').value)||0;
+  var fe  = document.getElementById('afe').value||hoy();
+  if (!n)    { showToast('Ingresa el nombre del producto', true); return; }
+  if (pr<=0) { showToast('Ingresa un precio de venta', true); return; }
+  try {
+    await addDoc(collection(db,'productos'), {nombre:n,cat:cat,stock:sto,disp:dis,costo:co,precio:pr,fecha:fe,ts:serverTimestamp()});
+    ['an','asto','adis','aco','apr','afe'].forEach(function(id){ document.getElementById(id).value=''; });
+    toggleForm('alm');
+    showToast('Producto "'+n+'" agregado');
+  } catch(e) { showToast('Error al guardar', true); }
+};
+
+window.delProd = async function(id) {
+  try {
+    await deleteDoc(doc(db,'productos',id));
+    showToast('Producto eliminado');
+  } catch(e) { showToast('Error al eliminar', true); }
+};
+
+// ── VENTAS ──────────────────────────────────────
+function loadSelect(){
+  var s = document.getElementById('vp');
+  var prev = s.value;
+  s.innerHTML = '<option value="">— Selecciona —</option>';
+  prods.filter(function(p){return p.disp>0;}).forEach(function(p){
+    s.innerHTML += '<option value="'+p.id+'">'+p.nombre+' ('+p.disp+' disp.) S/'+p.precio.toFixed(2)+'</option>';
+  });
+  if (prev) s.value = prev;
+}
+
+window.fillVenta = function(){
+  var id = document.getElementById('vp').value;
+  var p  = prods.find(function(x){return x.id===id;});
+  if (p){ document.getElementById('vpr').value=p.precio.toFixed(2); calcV(); }
+  else  { document.getElementById('vpr').value=''; document.getElementById('vi').value=''; document.getElementById('vg').value=''; }
+};
+
+window.calcV = function(){
+  var id = document.getElementById('vp').value;
+  var p  = prods.find(function(x){return x.id===id;});
+  var q  = parseInt(document.getElementById('vq').value)||1;
+  var pr = parseFloat(document.getElementById('vpr').value)||0;
+  if (p&&q>0&&pr>0){
+    document.getElementById('vi').value = 'S/ '+(p.costo*q).toFixed(2);
+    document.getElementById('vg').value = 'S/ '+((pr*q)-(p.costo*q)).toFixed(2);
+  }
+};
+
+window.addVenta = async function(){
+  var id = document.getElementById('vp').value;
+  var p  = prods.find(function(x){return x.id===id;});
+  var q  = parseInt(document.getElementById('vq').value)||1;
+  var pr = parseFloat(document.getElementById('vpr').value)||0;
+  var fe = document.getElementById('vfe').value||hoy();
+  if (!p)      { showToast('Selecciona un producto', true); return; }
+  if (q>p.disp){ showToast('Solo hay '+p.disp+' unidades disponibles', true); return; }
+  if (pr<=0)   { showToast('Ingresa el precio de venta', true); return; }
+  var inv = p.costo*q;
+  var gan = (pr*q)-inv;
+  try {
+    await addDoc(collection(db,'ventas'), {
+      nombre:p.nombre, cantidad:q, inversion:inv,
+      precioFinal:pr*q, ganancia:gan, fecha:fe, ts:serverTimestamp()
+    });
+    await updateDoc(doc(db,'productos',id), { disp:p.disp-q, stock:p.stock-q });
+    ['vq','vpr','vi','vg'].forEach(function(x){ document.getElementById(x).value = x==='vq'?1:''; });
+    document.getElementById('vp').value='';
+    toggleForm('ven');
+    showToast('Venta registrada · stock actualizado');
+  } catch(e) { showToast('Error al registrar', true); }
+};
+
+window.delVenta = async function(id, nombre, cantidad){
+  try {
+    await deleteDoc(doc(db,'ventas',id));
+    var p = prods.find(function(x){return x.nombre===nombre;});
+    if (p) await updateDoc(doc(db,'productos',p.id),{disp:p.disp+cantidad, stock:p.stock+cantidad});
+    showToast('Venta eliminada · stock restaurado');
+  } catch(e) { showToast('Error al eliminar', true); }
+};
+
+function renderVentas(){
+  var filt = document.getElementById('filt-f').value;
+  var lista = filt ? ventas.filter(function(v){return v.fecha===filt;}) : ventas;
+  var c = document.getElementById('lista-ven');
+  if (!lista.length){
+    c.innerHTML = '<div class="empty"><div class="empty-icon">💰</div>Sin ventas'+(filt?' en esta fecha':'')+'</div>';
+    updateMetVen(lista); return;
+  }
+  c.innerHTML = lista.map(function(v){
+    return '<div class="venta-card">'+
+      '<div class="venta-header">'+
+        '<div><div class="venta-name">'+v.nombre+'</div>'+
+        '<div class="venta-fecha">'+v.fecha+' · '+v.cantidad+' unidad'+(v.cantidad>1?'es':'')+'</div></div>'+
+        '<button class="btn btn-danger" onclick="delVenta(\''+v.id+'\',\''+v.nombre+'\','+v.cantidad+')">X</button>'+
+      '</div>'+
+      '<div class="venta-stats">'+
+        '<div class="venta-stat"><div class="venta-stat-lbl">Inversión</div><div class="venta-stat-val">S/'+v.inversion.toFixed(2)+'</div></div>'+
+        '<div class="venta-stat"><div class="venta-stat-lbl">Precio final</div><div class="venta-stat-val">S/'+v.precioFinal.toFixed(2)+'</div></div>'+
+        '<div class="venta-stat"><div class="venta-stat-lbl">Ganancia</div><div class="venta-stat-val g">S/'+v.ganancia.toFixed(2)+'</div></div>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+  updateMetVen(lista);
+}
+
+function updateMetVen(lista){
+  document.getElementById('mv-n').textContent   = lista.length;
+  var ing = lista.reduce(function(s,v){return s+v.precioFinal;},0);
+  var inv = lista.reduce(function(s,v){return s+v.inversion;},0);
+  var gan = lista.reduce(function(s,v){return s+v.ganancia;},0);
+  document.getElementById('mv-ing').textContent = 'S/'+ing.toFixed(0);
+  document.getElementById('mv-inv').textContent = 'S/'+inv.toFixed(0);
+  document.getElementById('mv-gan').textContent = 'S/'+gan.toFixed(0);
+}
+
+// ── Listeners en tiempo real ─────────────────────
+onSnapshot(
+  query(collection(db,'productos'), orderBy('ts','desc')),
+  function(snap){
+    prods = snap.docs.map(function(d){ return Object.assign({id:d.id},d.data()); });
+    renderAlm();
+    loadSelect();
+    setSyncOk();
+  },
+  function(){ setSyncErr(); }
+);
+
+onSnapshot(
+  query(collection(db,'ventas'), orderBy('ts','desc')),
+  function(snap){
+    ventas = snap.docs.map(function(d){ return Object.assign({id:d.id},d.data()); });
+    renderVentas();
+    setSyncOk();
+  },
+  function(){ setSyncErr(); }
+);
+
+// ── Init ─────────────────────────────────────────
+document.getElementById('afe').value = hoy();
+document.getElementById('vfe').value = hoy();
+</script>
+</body>
+</html>
