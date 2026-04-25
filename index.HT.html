@@ -7,8 +7,6 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="KYM">
 <title>KYM</title>
-  <link rel="apple-touch-icon" href="logo-tech.png.png?v=4"/>
-<link rel="icon" type="image/png" href="logo-tech.png.png?v=4"/>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500&display=swap');
   :root {
@@ -75,6 +73,12 @@
   .btn-primary{background:var(--accent);color:#0d0d0f}
   .btn-ghost{background:var(--bg3);color:var(--text);border:1px solid var(--border)}
   .btn-danger{background:rgba(255,95,87,.12);color:var(--danger);border:1px solid rgba(255,95,87,.2);padding:8px 14px;font-size:13px;width:auto;border-radius:8px}
+  .btn-edit{background:rgba(200,242,90,.1);color:var(--accent);border:1px solid rgba(200,242,90,.25);padding:8px 14px;font-size:13px;width:auto;border-radius:8px}
+  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;display:flex;align-items:flex-end;justify-content:center;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+  .modal-overlay.hidden{display:none}
+  .modal{background:var(--bg2);border:1px solid var(--border);border-radius:24px 24px 0 0;padding:24px 20px 40px;width:100%;max-width:480px}
+  .modal-title{font-family:'Syne',sans-serif;font-size:16px;font-weight:700;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center}
+  .modal-close{background:var(--bg3);border:none;color:var(--muted);font-size:18px;width:32px;height:32px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center}
 
   .prod-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:10px}
   .prod-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px}
@@ -221,6 +225,33 @@
   <div class="lista-wrap" id="lista-ven"><div class="loader">Cargando ventas...</div></div>
 </div>
 
+<!-- MODAL EDITAR PRODUCTO -->
+<div class="modal-overlay hidden" id="modal-overlay" onclick="closeModal(event)">
+  <div class="modal">
+    <div class="modal-title">
+      <span>✏️ Editar producto</span>
+      <button class="modal-close" onclick="closeModalBtn()">✕</button>
+    </div>
+    <div class="field"><label>Nombre</label><input id="en" placeholder="Nombre del producto"></div>
+    <div class="field"><label>Categoría</label>
+      <select id="ecat">
+        <option>Aros de luz</option><option>Micrófonos</option>
+        <option>Audífonos</option><option>Accesorios</option>
+      </select>
+    </div>
+    <div class="grid2">
+      <div class="field"><label>Stock total</label><input id="esto" type="number" min="0"></div>
+      <div class="field"><label>Disponible</label><input id="edis" type="number" min="0"></div>
+    </div>
+    <div class="grid2">
+      <div class="field"><label>Costo (S/)</label><input id="eco" type="number" min="0" step="0.01"></div>
+      <div class="field"><label>Precio venta (S/)</label><input id="epr" type="number" min="0" step="0.01"></div>
+    </div>
+    <div class="field"><label>Fecha</label><input id="efe" type="date"></div>
+    <button class="btn btn-primary" onclick="saveEdit()" style="margin-top:4px">Guardar cambios</button>
+  </div>
+</div>
+
 <div class="bottom-bar">
   <div class="tabs">
     <button class="tab active" onclick="goTab('almacen')">📦 Almacén</button>
@@ -308,7 +339,7 @@ function renderAlm() {
       '</div>'+
       '<div style="display:flex;justify-content:space-between;align-items:center">'+
         '<span style="font-size:11px;color:var(--muted)">Costo S/'+p.costo.toFixed(2)+' · '+p.fecha+'</span>'+
-        '<button class="btn btn-danger" onclick="delProd(\''+p.id+'\')">Eliminar</button>'+
+        '<div style="display:flex;gap:8px">'+'<button class="btn btn-edit" onclick="openEdit(\''+p.id+'\')" style="font-size:12px;padding:7px 12px">✏️ Editar</button>'+'<button class="btn btn-danger" onclick="delProd(\''+p.id+'\')" style="font-size:12px;padding:7px 12px">Eliminar</button>'+'</div>'+
       '</div>'+
     '</div>';
   }).join('');
@@ -443,6 +474,50 @@ onSnapshot(query(collection(db,'ventas'),orderBy('ts','desc')),
 
 document.getElementById('afe').value=hoy();
 document.getElementById('vfe').value=hoy();
+
+// ── Edit modal ───────────────────────────────────
+var editId = null;
+
+window.openEdit = function(id){
+  var p = prods.find(function(x){return x.id===id;});
+  if(!p) return;
+  editId = id;
+  document.getElementById('en').value   = p.nombre;
+  document.getElementById('ecat').value = p.cat;
+  document.getElementById('esto').value = p.stock;
+  document.getElementById('edis').value = p.disp;
+  document.getElementById('eco').value  = p.costo;
+  document.getElementById('epr').value  = p.precio;
+  document.getElementById('efe').value  = p.fecha;
+  document.getElementById('modal-overlay').classList.remove('hidden');
+};
+
+window.closeModalBtn = function(){
+  document.getElementById('modal-overlay').classList.add('hidden');
+  editId = null;
+};
+
+window.closeModal = function(e){
+  if(e.target === document.getElementById('modal-overlay')) closeModalBtn();
+};
+
+window.saveEdit = async function(){
+  if(!editId) return;
+  var n   = document.getElementById('en').value.trim();
+  var cat = document.getElementById('ecat').value;
+  var sto = parseInt(document.getElementById('esto').value)||0;
+  var dis = parseInt(document.getElementById('edis').value)||0;
+  var co  = parseFloat(document.getElementById('eco').value)||0;
+  var pr  = parseFloat(document.getElementById('epr').value)||0;
+  var fe  = document.getElementById('efe').value||hoy();
+  if(!n){showToast('Ingresa el nombre',true);return;}
+  if(pr<=0){showToast('Ingresa un precio de venta',true);return;}
+  try{
+    await updateDoc(doc(db,'productos',editId),{nombre:n,cat:cat,stock:sto,disp:dis,costo:co,precio:pr,fecha:fe});
+    closeModalBtn();
+    showToast('Producto actualizado ✓');
+  }catch(e){showToast('Error al guardar',true);}
+};
 </script>
 </body>
 </html>
